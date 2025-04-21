@@ -1,0 +1,82 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 1. Define function and gradient
+def f(x, y):
+    return 10 * (x - 2)**2 + (y + 3)**2
+
+def grad_f(x, y):
+    return np.array([20 * (x - 2), 2 * (y + 3)])
+
+# 2. Gradient descent function
+def gradient_descent(norm_type='l2', epsilon=0.7, alpha=0.09, max_iters=150):#you can change the value of alpha to a bigger value to see the different paths the different norm takes.
+    x = np.array([0.0, 0.0])
+    path = [x.copy()]
+    values = [f(x[0], x[1])]
+    
+    for _ in range(max_iters):
+        grad = grad_f(x[0], x[1])
+        
+        if norm_type == 'l2':
+            norm = np.linalg.norm(grad, 2)
+        elif norm_type == 'l1':
+            norm = np.linalg.norm(grad, 1)
+        elif norm_type == 'inf':
+            norm = np.linalg.norm(grad, np.inf)
+        else:
+            raise ValueError("Unsupported norm type.")
+        
+        if norm < epsilon:
+            break
+        
+        grad_unit = grad / norm
+        x -= alpha * grad_unit
+        path.append(x.copy())
+        values.append(f(x[0], x[1]))
+    
+    return np.array(path), np.array(values)
+
+# 3. Run all three norms
+path_l2, values_l2 = gradient_descent('l2')
+path_l1, values_l1 = gradient_descent('l1')
+path_inf, values_inf = gradient_descent('inf')
+
+# 4. Plot setup
+plt.figure(figsize=(12, 6))
+
+# --- Path Plot with Arrows ---
+plt.subplot(1, 2, 1)
+def plot_with_arrows(path, color, marker, label):
+    plt.plot(path[:, 0], path[:, 1], color=color, marker=marker, label=label)
+    for i in range(len(path) - 1):
+        plt.arrow(path[i, 0], path[i, 1],
+                  path[i+1, 0] - path[i, 0],
+                  path[i+1, 1] - path[i, 1],
+                  head_width=0.05, length_includes_head=True, color=color, alpha=0.7)
+
+plot_with_arrows(path_l2, 'blue', 'o', 'L2 Norm (Euclidean)')
+plot_with_arrows(path_l1, 'orange', 's', 'L1 Norm (Manhattan)')
+plot_with_arrows(path_inf, 'green', '^', 'Infinity Norm (Max)')
+
+# Add minimum point
+plt.plot(2, -3, 'r*', markersize=12, label='Minimum (2, -3)')
+plt.xlabel('x')
+plt.ylabel('y')
+plt.title('Gradient Descent Paths with Arrows')
+plt.grid(True)
+plt.legend()
+plt.axis('equal')
+
+# --- Loss Plot ---
+plt.subplot(1, 2, 2)
+plt.plot(values_l2, 'b-', label='L2 Norm')
+plt.plot(values_l1, 'orange', label='L1 Norm')
+plt.plot(values_inf, 'g-', label='Infinity Norm')
+plt.xlabel('Iteration')
+plt.ylabel('f(x, y)')
+plt.title('Function Value Over Iterations')
+plt.grid(True)
+plt.legend()
+
+plt.tight_layout()
+plt.show()
